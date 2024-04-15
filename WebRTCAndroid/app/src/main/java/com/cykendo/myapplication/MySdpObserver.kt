@@ -1,7 +1,6 @@
 package com.cykendo.myapplication
 
-import org.webrtc.SdpObserver
-import org.webrtc.SessionDescription
+import org.webrtc.*
 
 open class MySdpObserver(name : String) : SdpObserver {
     override fun onCreateSuccess(sessionDescription: SessionDescription) {

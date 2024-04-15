@@ -18,7 +18,7 @@ const wsServer = SocketIO(httpServer);
 wsServer.on("connection", socket =>  {
     console.log("connected!!", socket.handshake.address);
     socket.on("join_room", (roomName) => {
-        console.log("join-->welcome", roomName);
+        console.log("join-->welcome", roomName, socket.handshake.address);
         socket.join(roomName);
         socket.to(roomName).emit("welcome");
     });

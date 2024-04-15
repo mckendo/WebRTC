@@ -125,34 +125,32 @@ socket.on("welcome", async () => {
   console.log("made data channel");
   const offer = await myPeerConnection.createOffer();
   myPeerConnection.setLocalDescription(offer);
-  console.log("sent the offer");
+  console.log("sent the offer", offer);
   socket.emit("offer", offer, roomName);
 });
 
 socket.on("offer", async (offer) => {
-  console.log("on-offer");
+  console.log("on-offer", offer);
   myPeerConnection.addEventListener("datachannel", (event) => {
     myDataChannel = event.channel;
     myDataChannel.addEventListener("message", (event) =>
       console.log(event.data)
     );
   });
-  console.log("received the offer", offer);
   myPeerConnection.setRemoteDescription(offer);
   const answer = await myPeerConnection.createAnswer();
   myPeerConnection.setLocalDescription(answer);
   socket.emit("answer", answer, roomName);
-  console.log("sent the answer");
+  console.log("sent the answer", answer);
 });
 
 socket.on("answer", (answer) => {
-  console.log("on-answer");
-  console.log("received the answer");
+  console.log("received the answer", answer);
   myPeerConnection.setRemoteDescription(answer);
 });
 
 socket.on("ice", (ice) => {
-  console.log("on-ice");
+  console.log("<<<<<<<<<<<<<< on-ice");
   console.log("received the candidate", ice);
   myPeerConnection.addIceCandidate(ice);
 });
@@ -181,8 +179,11 @@ function makeConnection() {
 }
 
 function handleIce(data) {
-  console.log("sent candidate");
-  socket.emit("ice", data.candidate, roomName);
+  if (data.candidate) {
+    console.log(">>>>>>>>>>>>> sent candidate");
+    console.log("ice: ", data.candidate);
+    socket.emit("ice", data.candidate, roomName);
+  }
 }
 
 function handleAddStream(data) {

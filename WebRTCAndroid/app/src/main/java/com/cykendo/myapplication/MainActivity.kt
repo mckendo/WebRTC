@@ -28,10 +28,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var socket: Socket
 
-    private val SERVER_URL = "http://192.168.219.112:3000"
-//    private val SERVER_URL = "http://192.168.219.107:3000"
-    //private val SERVER_URL = "https://b3aa-116-37-5-142.ngrok-free.app"
-
+    private val SERVER_URL = "http://192.168.219.102:3000"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -56,16 +53,10 @@ class MainActivity : AppCompatActivity() {
 
         val eglBaseContext = EglBase.create().eglBaseContext
 
-        val hardwareEncoder = HardwareVideoEncoderFactory(eglBaseContext, true, true)
-        val videoEncoderFactory =
-            SimulcastVideoEncoderFactory(hardwareEncoder, SoftwareVideoEncoderFactory())
-
-        val factoryOptions = PeerConnectionFactory.Options()
-
         peerConnectionFactory = PeerConnectionFactory.builder()
-            .setOptions(factoryOptions)
+            .setOptions(PeerConnectionFactory.Options())
             .setVideoDecoderFactory(DefaultVideoDecoderFactory(eglBaseContext))
-            .setVideoEncoderFactory(videoEncoderFactory)
+            .setVideoEncoderFactory(DefaultVideoEncoderFactory(eglBaseContext, true, true))
             .createPeerConnectionFactory()
 
         val iceServers = listOf(
@@ -78,11 +69,10 @@ class MainActivity : AppCompatActivity() {
 
         val rtcConfig = PeerConnection.RTCConfiguration(iceServers).apply {
 //            this.tcpCandidatePolicy = PeerConnection.TcpCandidatePolicy.ENABLED;
-//            this.bundlePolicy = PeerConnection.BundlePolicy.BALANCED;
-//            this.rtcpMuxPolicy = PeerConnection.RtcpMuxPolicy.NEGOTIATE;
-//            this.continualGatheringPolicy = PeerConnection.ContinualGatheringPolicy.GATHER_ONCE;
+//            this.bundlePolicy = PeerConnection.BundlePolicy.MAXBUNDLE;
+//            this.rtcpMuxPolicy = PeerConnection.RtcpMuxPolicy.REQUIRE;
+//            this.continualGatheringPolicy = PeerConnection.ContinualGatheringPolicy.GATHER_CONTINUALLY;
 //            sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN
-//            this.enableDscp = true
 //            this.keyType = PeerConnection.KeyType.ECDSA;
         }
 
@@ -143,6 +133,9 @@ class MainActivity : AppCompatActivity() {
 
                 override fun onRenegotiationNeeded() {
                     Log.d(TAG, "peerConnection-onRenegotiationNeeded")
+                }
+
+                override fun onAddTrack(p0: RtpReceiver?, p1: Array<out MediaStream>?) {
                 }
             }
         ) ?: return
@@ -238,13 +231,10 @@ class MainActivity : AppCompatActivity() {
                         MySdpObserver("local"),
                         sessionDescription
                     )
-                    // a=msid:<stream id> <track id>
-                    // unspecified stream id '-' remove !!!!!!!!!!!!!!
-                    val sdp = sessionDescription.description.replace("a=msid:- ", "a=msid:")
 
                     val jsonObject = JSONObject().apply {
                         put("type", "offer")
-                        put("sdp", sdp)
+                        put("sdp", sessionDescription.description)
                     }
                     socket.emit("offer", jsonObject, "1")
                     Log.d(TAG, "SEND Offer!!! $jsonObject")
@@ -260,10 +250,9 @@ class MainActivity : AppCompatActivity() {
             peerConnection.createAnswer(object : MySdpObserver("answer") {
                 override fun onCreateSuccess(sessionDescription: SessionDescription) {
                     peerConnection.setLocalDescription(MySdpObserver("local"), sessionDescription)
-                    val answerSdp = sessionDescription.description.replace("a=msid:- ", "a=msid:")
                     val jsonObject = JSONObject().apply {
                         put("type", "answer")
-                        put("sdp", answerSdp)
+                        put("sdp", sessionDescription.description)
                     }
                     socket.emit("answer", jsonObject, "1")
                     Log.d(TAG, "SEND Answer!!! $jsonObject")
