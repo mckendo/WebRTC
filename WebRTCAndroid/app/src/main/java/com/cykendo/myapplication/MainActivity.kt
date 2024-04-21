@@ -28,7 +28,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var socket: Socket
 
-    private val SERVER_URL = "http://192.168.219.102:3000"
+    private val SERVER_URL = "http://192.168.219.104:3000"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         WindowCompat.setDecorFitsSystemWindows(window, false)
